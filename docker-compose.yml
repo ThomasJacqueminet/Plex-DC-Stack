@@ -3,50 +3,50 @@ services:
   portainer:
     image: portainer/portainer
     container_name: portainer
-    restart: always
     command: -H unix:///var/run/docker.sock
+    environment:
+      - TZ=${TZ}
     ports:
       - "9000:9000"
+    restart: always
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - ${USERDIR}/docker/portainer/data:/data
       - ${USERDIR}/docker/shared:/shared
-    environment:
-      - TZ=${TZ}
   watchtower:
-    container_name: watchtower
-    restart: always
     image: v2tec/watchtower
+    container_name: watchtower
+    command: --schedule "0 0 4 * * *" --cleanup
+    restart: always
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
-    command: --schedule "0 0 4 * * *" --cleanup
   qbittorrent:
     image: "linuxserver/qbittorrent"
     container_name: "qbittorrent"
-    volumes:
-      - ${USERDIR}/docker/qbittorrent:/config
-      - ${USERDIR}/Downloads/completed:/downloads
-      - ${USERDIR}/docker/shared:/shared
-    ports:
-      - "9091:9091"
-      - "6881:6881"
-      - "6881:6881/udp"
-    restart: always
     environment:
       - PUID=${PUID}
       - PGID=${PGID}
       - TZ=${TZ}
       - UMASK_SET=002
       - WEBUI_PORT=9091
-  plexms:
-    container_name: plexms
+    ports:
+      - "9091:9091"
+      - "6881:6881"
+      - "6881:6881/udp"
     restart: always
-    image: plexinc/pms-docker
     volumes:
-      - ${USERDIR}/docker/plexms:/config
-      - ${USERDIR}/Downloads/plex_tmp:/transcode
-      - ${USERDIR}/Downloads/completed:/media
+      - ${USERDIR}/docker/qbittorrent:/config
+      - ${USERDIR}/Downloads/completed:/downloads
       - ${USERDIR}/docker/shared:/shared
+  plexms:
+    image: plexinc/pms-docker
+    container_name: plexms
+    environment:
+      - TZ=${TZ}
+      - HOSTNAME="Docker Plex"
+      - PLEX_UID=${PUID}
+      - PLEX_GID=${PGID}
+      - ADVERTISE_IP="http://5.135.153.177:32400/"
     ports:
       - "32400:32400/tcp"
       - "3005:3005/tcp"
@@ -57,69 +57,69 @@ services:
       - "32412:32412/udp"
       - "32413:32413/udp"
       - "32414:32414/udp"
-    environment:
-      - TZ=${TZ}
-      - HOSTNAME="Docker Plex"
-      - PLEX_UID=${PUID}
-      - PLEX_GID=${PGID}
-      - ADVERTISE_IP="http://5.135.153.177:32400/"
-  ombi:
-    container_name: ombi
     restart: always
-    image: linuxserver/ombi
     volumes:
-      - ${USERDIR}/docker/ombi:/config
+      - ${USERDIR}/docker/plexms:/config
+      - ${USERDIR}/Downloads/plex_tmp:/transcode
+      - ${USERDIR}/Downloads/completed:/media
       - ${USERDIR}/docker/shared:/shared
-    ports:
-      - "3579:3579"
+  ombi:
+    image: linuxserver/ombi
+    container_name: ombi
     environment:
       - PUID=${PUID}
       - PGID=${PGID}
       - TZ=${TZ}
+    ports:
+      - "3579:3579"
+    restart: always
+    volumes:
+      - ${USERDIR}/docker/ombi:/config
+      - ${USERDIR}/docker/shared:/shared
   sonarr:
     image: "linuxserver/sonarr"
     container_name: "sonarr"
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
+    ports:
+        - "8989:8989"
+    restart: always
     volumes:
       - ${USERDIR}/docker/sonarr:/config
       - ${USERDIR}/Downloads/completed:/downloads
       - ${USERDIR}/Downloads/completed/TVSHOWS:/tv
       - "/etc/localtime:/etc/localtime:ro"
       - ${USERDIR}/docker/shared:/shared
-    ports:
-        - "8989:8989"
-    restart: always
+  radarr:
+    image: "linuxserver/radarr"
+    container_name: "radarr"
     environment:
       - PUID=${PUID}
       - PGID=${PGID}
       - TZ=${TZ}
-  radarr:
-    image: "linuxserver/radarr"
-    container_name: "radarr"
+    ports:
+      - "7878:7878"
+    restart: always
     volumes:
       - ${USERDIR}/docker/radarr:/config
       - ${USERDIR}/Downloads/completed:/downloads
       - ${USERDIR}/Downloads/completed/MOVIES:/movies
       - "/etc/localtime:/etc/localtime:ro"
       - ${USERDIR}/docker/shared:/shared
-    ports:
-      - "7878:7878"
-    restart: always
+  jackett:
+    image: "linuxserver/jackett"
+    container_name: "jackett"
     environment:
       - PUID=${PUID}
       - PGID=${PGID}
       - TZ=${TZ}
-  jackett:
-    image: "linuxserver/jackett"
-    container_name: "jackett"
+    ports:
+      - "9117:9117"
+    restart: always
     volumes:
       - ${USERDIR}/docker/jackett:/config
       - ${USERDIR}/Downloads/completed:/downloads
       - "/etc/localtime:/etc/localtime:ro"
       - ${USERDIR}/docker/shared:/shared
-    ports:
-      - "9117:9117"
-    restart: always
-    environment:
-      - PUID=${PUID}
-      - PGID=${PGID}
-      - TZ=${TZ}
