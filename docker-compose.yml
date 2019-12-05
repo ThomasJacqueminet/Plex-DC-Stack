@@ -20,24 +20,25 @@ services:
     restart: always
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
-  qbittorrent:
-    image: "linuxserver/qbittorrent"
-    container_name: "qbittorrent"
+  transmission:
+    image: linuxserver/transmission
+    container_name: transmission
     environment:
       - PUID=${PUID}
       - PGID=${PGID}
       - TZ=${TZ}
-      - UMASK_SET=002
-      - WEBUI_PORT=9091
+      - TRANSMISSION_WEB_HOME=/combustion-release/ #optional
+      - USER=#USERNAME# #optional
+      - PASS=#PASSWORD# #optional
     ports:
-      - "9091:9091"
-      - "6881:6881"
-      - "6881:6881/udp"
-    restart: always
+      - 9091:9091
+      - 51413:51413
+      - 51413:51413/udp
+    restart: unless-stopped
     volumes:
       - ${USERDIR}/docker/qbittorrent:/config
       - ${USERDIR}/Downloads/completed:/downloads
-      - ${USERDIR}/docker/shared:/shared
+      - ${USERDIR}/docker/shared:/watch
   plexms:
     image: plexinc/pms-docker
     container_name: plexms
